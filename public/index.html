@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzI4YTc0NSIvPjx0ZXh0IHg9IjE2IiB5PSIyMyIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjIwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TTwvdGV4dD48L3N2Zz4=">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý Mai Táng Phí</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-buttons-bs4@2.4.1/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+.btn {
+    padding: 1px 5px !important;
+}
+.select2-container{width:100%!important}
+.select2-container .select2-selection--single{height:31px;border:1px solid #ced4da;border-radius:4px}
+.select2-container--default .select2-selection--single .select2-selection__rendered{line-height:29px;font-size:13px;color:#495057}
+.select2-container--default .select2-selection--single .select2-selection__arrow{height:29px}
+.mtp-tabs{border-bottom:2px solid #dee2e6;margin-bottom:20px}
+.mtp-tabs .nav-link{color:#555;border-radius:4px 4px 0 0;font-weight:500}
+.mtp-tabs .nav-link.active{color:#155724;background:#d4edda;border-color:#c3e6cb #c3e6cb #fff}
+#mtp-tab-content{display:block!important;width:100%!important}
+.mtp-pane{display:none;width:100%}
+.mtp-pane.mtp-active{display:block!important;width:100%}
+.mtp-pane>*{width:100%;display:block;box-sizing:border-box;float:none;clear:both}
+.mtp-pane>.no-print{display:block}
+.th-group{background:#e8f4fd;text-align:center;font-weight:600;border:1px solid #b8daff}
+.th-sub{background:#f8f9fa;font-size:11px;text-align:center;white-space:nowrap}
+.td-money{text-align:right;white-space:nowrap}
+.td-num{text-align:center}
+.tr-total td{font-weight:700;background:#fff3cd}
+.badge-loai{font-size:11px;padding:3px 6px}
+.badge-150{background:#d4edda;color:#155724}
+.badge-49{background:#cce5ff;color:#004085}
+.badge-62{background:#fff3cd;color:#856404}
+.badge-290{background:#f8d7da;color:#721c24}
+.badge-NCC{background:#e2d9f3;color:#3d0099}
+/* Style cho các bảng */
+.table-bordered th, .table-bordered td{border:1px solid #000!important}
+/* Tiêu đề bảng chữ màu đen, nền xám nhạt */
+.table thead th{background:#f0f0f0!important;color:#000000!important;font-weight:700!important;text-align:center!important;vertical-align:middle!important}
+/* DataTable không ghi đè style */
+.dataTables_wrapper .dataTable thead th{background:#f0f0f0!important;color:#000000!important}
+#tbl-b1 thead th{background:#f0f0f0!important;color:#000000!important}
+#tbl-b2 thead th{background:#343a40!important;color:#ffffff!important} /* B2 giữ nguyên dark */
+#tbl-b3 thead th{background:#f0f0f0!important;color:#000000!important}
+#tbl-b4 thead th{background:#f0f0f0!important;color:#000000!important}
+#tbl-b5 thead th{background:#f0f0f0!important;color:#000000!important}
+#tbl-b4{table-layout:auto!important;width:auto!important;min-width:100%}
+#tbl-b4 th,#tbl-b4 td{width:auto!important;padding:3px 4px!important;font-size:13px!important;box-sizing:border-box}
+#tbl-b4 .muc-col{width:65px!important;min-width:65px!important;max-width:85px!important;white-space:nowrap!important;text-align:center!important}
+#tbl-b4 .total-col{width:auto!important;min-width:95px!important;white-space:nowrap!important;text-align:right!important}
+#tbl-b4 th:first-child,#tbl-b4 td:first-child{width:45px!important;text-align:center}
+#tbl-b4 th:nth-child(2),#tbl-b4 td:nth-child(2){min-width:180px;word-break:break-word;white-space:normal}
+#tbl-b4 th:last-child,#tbl-b4 td:last-child{min-width:200px;word-break:break-word;white-space:normal}
+#tbl-b3 td:nth-child(4),.soqd-wrap{word-break:break-all;white-space:normal!important;min-width:120px}
+.extra-fields{border-top:2px solid #dee2e6;padding-top:12px;margin-top:4px}
+.date-input-group{display:flex;gap:4px}
+.date-input-group input{text-align:center}
+.td-money{text-align:right!important}
+.td-center{text-align:center!important}
+.td-left{text-align:left!important}
+.td-bold{font-weight:700}
+.bg-total{background:#fff3cd!important}
+
+/* ========== STYLE IN ẤN GIỮ NGUYÊN ========== */
+@media print{
+  /* Ẩn các phần tử không cần in */
+  .no-print{display:none!important}
+  .mtp-tabs{display:none!important}
+  .card-header{display:none!important}
+  .card-body{display:none!important}
+  button{display:none!important}
+  #report-toolbar{display:none!important}
+  
+  /* Giữ style bảng */
+  .table-bordered th, .table-bordered td{border:1px solid #000!important}
+  .table thead th{background:#f0f0f0!important;color:#000000!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+  .bg-total{background:#fff3cd!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+  .td-money{text-align:right!important}
+  .td-center{text-align:center!important}
+  
+  /* Đảm bảo hiển thị đúng nội dung */
+  #mtp-tab-content{display:block!important}
+  .mtp-pane{display:block!important}
+  .mtp-pane.mtp-active{display:block!important}
+  
+  /* Điều chỉnh font cho in */
+  body{font-size:12px}
+  table{font-size:11px}
+  h5{font-size:14px}
+}
+
+/* Style cho phần in B5 */
+#print-all-b5 .b5-item{
+  page-break-after: always;
+  margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container-fluid py-3">
+
+<!-- Header -->
+<div class="row mb-3 no-print">
+  <div class="col-sm-6">
+    <h4 class="mb-0"><i class="fa fa-money text-success"></i> <strong>Quản lý Mai Táng Phí</strong></h4>
+    <small class="text-muted">Xin chào <strong id="fullname-display"></strong></small>
+  </div>
+  <div class="col-sm-6 text-right">
+    <button class="btn btn-outline-secondary btn-sm mr-1" onclick="$('#modal-settings').modal('show')">
+      <i class="fa fa-cog"></i> Cài đặt
+    </button>
+    <button class="btn btn-outline-danger btn-sm" onclick="doLogout()">
+      <i class="fa fa-sign-out"></i> Đăng xuất
+    </button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav mtp-tabs no-print" id="mtpTabs">
+  <li class="nav-item"><a class="nav-link active" href="#" onclick="switchTab('tab-b2');return false;">Bảng 2 — Đơn vị</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('tab-b1');return false;">Bảng 1 — Danh sách</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('tab-b3');return false;">Bảng 3 — Thông báo đợt</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('tab-b4');return false;">Bảng 4 — Chi tiết đợt</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('tab-b5');return false;">Bảng 5 — Chi tiết xã</a></li>
+</ul>
+
+<div id="mtp-tab-content">
+
+<!-- ══ BẢNG 2 — Đơn vị ══ -->
+<div class="mtp-pane mtp-active" id="tab-b2" style="display:block">
+  <div class="card mb-3">
+    <div class="card-header py-2 no-print" id="b2-card-header" style="background:#28a745;color:#fff">
+      <strong><i class="fa fa-plus" id="b2-header-icon"></i> <span id="b2-header-text">Thêm đơn vị xã</span></strong>
+    </div>
+    <div class="card-body no-print">
+      <input type="hidden" id="b2-edit-id" value="">
+      <div class="form-row">
+        <div class="form-group col-md-2"><label>Tên xã <span class="text-danger">*</span></label><input type="text" id="b2-xa" class="form-control form-control-sm" placeholder="VD: Xã An Bình"></div>
+        <div class="form-group col-md-3"><label>Tên đơn vị <span class="text-danger">*</span></label><input type="text" id="b2-donvi" class="form-control form-control-sm" placeholder="VD: Phòng Văn hóa - Xã hội xã An Bình"></div>
+        <div class="form-group col-md-2"><label>Số TK kho bạc</label><input type="text" id="b2-sotk" class="form-control form-control-sm"></div>
+        <div class="form-group col-md-2"><label>Kho bạc</label><input type="text" id="b2-khobac" class="form-control form-control-sm"></div>
+        <div class="form-group col-md-2"><label>Mã số thuế</label><input type="text" id="b2-mst" class="form-control form-control-sm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-3"><label>Cán bộ phụ trách</label><input type="text" id="b2-canbo" class="form-control form-control-sm"></div>
+        <div class="form-group col-md-2"><label>Số điện thoại</label><input type="text" id="b2-sdt" class="form-control form-control-sm"></div>
+        <div class="form-group col-md-2 d-flex align-items-end">
+          <button class="btn btn-success btn-sm mr-1" id="btn-save-donvi" onclick="saveDonvi()"><i class="fa fa-plus"></i> Thêm</button>
+          <button class="btn btn-secondary btn-sm" id="btn-cancel-donvi" onclick="cancelEditDonvi()" style="display:none">Hủy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-row mb-2 no-print align-items-end">
+    <div class="col-md-auto"><button class="btn btn-success btn-sm" onclick="exportDonviExcel()"><i class="fa fa-download"></i> Xuất Excel</button></div>
+    <div class="col-md-auto">
+      <div class="input-group input-group-sm">
+        <div class="custom-file" style="width:220px">
+          <input type="file" class="custom-file-input" id="import-donvi-file" accept=".xlsx,.xls,.csv">
+          <label class="custom-file-label" for="import-donvi-file" style="font-size:12px">Chọn file Excel/CSV</label>
+        </div>
+        <div class="input-group-append"><button class="btn btn-warning btn-sm" onclick="importDonvi()"><i class="fa fa-upload"></i> Import</button></div>
+      </div>
+      <small class="text-muted">Cột: Tên xã | Tên đơn vị | Số TK | Kho bạc | MST | Cán bộ | SĐT</small>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm table-hover" id="tbl-b2">
+      <thead class="thead-dark"><tr>
+        <th width="35">STT</th><th>Tên xã</th><th>Tên đơn vị</th><th>Số TK kho bạc</th>
+        <th>Kho bạc</th><th>Mã số thuế</th><th>Cán bộ phụ trách</th><th>Số ĐT</th>
+        <th width="100" class="no-print text-center">Thao tác</th>
+      </thead>
+      <tbody id="tbody-b2"><tr><td colspan="9" class="text-center text-muted py-3">Đang tải......</tbody>
+    </table>
+  </div>
+</div><!-- /tab-b2 -->
+
+<!-- ══ BẢNG 1 — Danh sách hồ sơ ══ -->
+<div class="mtp-pane" id="tab-b1" style="display:none">
+  <div class="card no-print mb-3">
+    <div class="card-header bg-primary text-white py-2"><strong><i class="fa fa-plus"></i> Thêm / Sửa hồ sơ</strong></div>
+    <div class="card-body">
+      <input type="hidden" id="b1-edit-id" value="">
+
+      <!-- Dòng 1: Thông tin cơ bản -->
+      <div class="form-row mb-2">
+        <div class="form-group col-md-3">
+          <label>Số quyết định <small class="text-muted">(để trống nếu chưa có)</small></label>
+          <input type="text" id="b1-soqd" class="form-control form-control-sm" placeholder="VD: 01/QĐ-SNV">
+        </div>
+        <div class="form-group col-md-2">
+          <label>Loại đối tượng <span class="text-danger">*</span></label>
+          <select id="b1-loai" class="form-control form-control-sm">
+            <option value="">-- Chọn --</option>
+            <option value="150">150/2006/NĐ-CP</option>
+            <option value="49">49/2015/QĐ-TTg</option>
+            <option value="62">62/2011/QĐ-TTg</option>
+            <option value="290">290/2005/QĐ-TTg</option>
+            <option value="NCC">Người có công (NCC)</option>
+          </select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>Mức hỗ trợ <span class="text-danger">*</span></label>
+          <select id="b1-muc" class="form-control form-control-sm">
+            <option value="">-- Chọn --</option>
+            <option value="12100000">12.100.000 đ</option>
+            <option value="14900000">14.900.000 đ</option>
+            <option value="18000000">18.000.000 đ</option>
+            <option value="23400000">23.400.000 đ</option>
+            <option value="25300000">25.300.000 đ</option>
+          </select>
+        </div>
+        <div class="form-group col-md-2">
+          <label>Xã <span class="text-danger">*</span></label>
+          <select id="b1-xa" class="form-control form-control-sm"><option value="">-- Chọn xã --</option></select>
+        </div>
+        <div class="form-group col-md-1">
+          <label>Đợt</label>
+          <input type="number" id="b1-dot" class="form-control form-control-sm" value="1" min="1" max="99">
+        </div>
+        <div class="form-group col-md-2">
+          <label>Ghi chú</label>
+          <input type="text" id="b1-ghichu" class="form-control form-control-sm" placeholder="(tuỳ chọn)">
+        </div>
+      </div>
+
+      <!-- Thông tin chi tiết — tất cả loại đối tượng -->
+      <div class="extra-fields">
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label>Họ tên đối tượng <span class="text-danger">*</span></label>
+            <input type="text" id="b1-doituong" class="form-control form-control-sm" placeholder="Họ và tên người từ trần">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Ngày sinh đối tượng</label>
+            <input type="text" id="b1-namsinh" class="form-control form-control-sm date-pick" placeholder="dd/mm/yyyy">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Ngày từ trần <span class="text-danger">*</span></label>
+            <input type="text" id="b1-ngaytutran" class="form-control form-control-sm date-pick" placeholder="dd/mm/yyyy">
+          </div>
+          <div class="form-group col-md-3">
+            <label>Huân huy chương / Chi tiết loại <small class="text-muted">(NCC)</small></label>
+            <input type="text" id="b1-chitietloai" class="form-control form-control-sm" placeholder="VD: Huân chương KC hạng Ba">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Bản/thôn đối tượng</label>
+            <input type="text" id="b1-ban_doituong" class="form-control form-control-sm" placeholder="Bản Tà Làng Trung">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label>Số/ngày công văn trình <span class="text-danger">*</span></label>
+            <input type="text" id="b1-so_ngay_trinh" class="form-control form-control-sm" placeholder="VD: CV số 335/UBND-VHXH ngày 15/4/2026">
+          </div>
+          <div class="form-group col-md-3">
+            <label>Người thực hiện mai táng <span class="text-danger">*</span></label>
+            <input type="text" id="b1-nguoinhan" class="form-control form-control-sm" placeholder="Họ và tên">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Quan hệ với đối tượng</label>
+            <input type="text" id="b1-quanhe" class="form-control form-control-sm" placeholder="VD: Là con trai">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Ngày sinh người nhận</label>
+            <input type="text" id="b1-ngaysinh_nhan" class="form-control form-control-sm date-pick" placeholder="dd/mm/yyyy">
+          </div>
+          <div class="form-group col-md-2">
+            <label>Giới tính</label>
+            <select id="b1-gioitinh" class="form-control form-control-sm">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>Quê quán người nhận</label>
+            <input type="text" id="b1-quequan_nhan" class="form-control form-control-sm" placeholder="Xã Chiềng Hặc, tỉnh Sơn La">
+          </div>
+          <div class="form-group col-md-8">
+            <label>Nơi thường trú người nhận</label>
+            <input type="text" id="b1-thuongtru_nhan" class="form-control form-control-sm" placeholder="Bản Tà Làng Trung, xã Chiềng Hặc, tỉnh Sơn La">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row mt-2">
+        <div class="col-12 d-flex justify-content-end">
+          <button class="btn btn-primary btn-sm mr-2" id="btn-save-hoso" onclick="saveHoso()"><i class="fa fa-save"></i> Lưu</button>
+          <button class="btn btn-secondary btn-sm" onclick="cancelEditHoso()">Hủy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import -->
+  <div class="card no-print mb-3">
+    <div class="card-header bg-warning py-2" style="color:#333"><strong><i class="fa fa-upload"></i> Import từ Excel</strong></div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <p class="text-muted small mb-2">
+            Tất cả loại đối tượng dùng chung 1 file mẫu.
+            <br><button class="btn btn-link btn-sm p-0" onclick="downloadTemplate()"><i class="fa fa-download"></i> Tải file mẫu Excel</button>
+          </p>
+        </div>
+        <div class="col-md-6">
+          <div class="form-row align-items-end">
+            <div class="col-md-2">
+              <label class="small">Đợt mặc định <i class="fa fa-info-circle text-muted" title="Dùng khi cột Đợt trong file để trống"></i></label>
+              <input type="number" id="import-dot-default" class="form-control form-control-sm" value="1" min="1" max="99">
+            </div>
+            <div class="col-md-5"><label class="small">Chọn file Excel</label><input type="file" id="import-file" class="form-control form-control-sm" accept=".xlsx,.xls"></div>
+            <div class="col-md-5"><button class="btn btn-warning btn-sm" onclick="readImportFile()"><i class="fa fa-eye"></i> Xem trước</button></div>
+          </div>
+        </div>
+      </div>
+      <div id="import-preview-wrap" style="display:none;margin-top:12px">
+        <div class="table-responsive" style="max-height:300px;overflow-y:auto;border:1px solid #dee2e6;border-radius:4px;">
+          <table class="table table-bordered table-sm" id="import-preview">
+            <thead><tr id="import-preview-head">...</thead>
+            <tbody id="import-preview-body"></tbody>
+          </table>
+        </div>
+        <div class="mt-2">
+          <button class="btn btn-success btn-sm" onclick="confirmImport()"><i class="fa fa-check"></i> Xác nhận nhập</button>
+          <span id="import-summary" class="ml-3 text-muted small"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter + DataTable -->
+  <div class="row mb-2 no-print">
+    <div class="col-md-2"><input type="number" id="b1-filter-dot" class="form-control form-control-sm" placeholder="Tất cả đợt" min="1" max="99" onchange="b1Table && b1Table.ajax.reload()"></div>
+    <div class="col-md-3">
+      <select id="b1-filter-loai" class="form-control form-control-sm" onchange="b1Table && b1Table.ajax.reload()">
+        <option value="">Tất cả đối tượng</option>
+        <option value="150">150/2006/NĐ-CP</option>
+        <option value="49">49/2015/QĐ-TTg</option>
+        <option value="62">62/2011/QĐ-TTg</option>
+        <option value="290">290/2005/QĐ-TTg</option>
+        <option value="NCC">Người có công (NCC)</option>
+      </select>
+    </div>
+    <div class="col-md-4"><select id="b1-filter-xa" class="form-control form-control-sm" onchange="b1Table && b1Table.ajax.reload()"><option value="">Tất cả xã</option></select></div>
+  </div>
+  <table id="tbl-b1" class="table table-bordered table-sm table-hover display" width="100%">
+    <thead>
+      <tr>
+        <th>STT</th><th>Số QĐ</th><th>Loại</th><th>Mức hỗ trợ</th>
+        <th>Xã</th><th>Đợt</th><th>Ghi chú</th>
+        <th>Đối tượng</th><th>Người nhận</th>
+        <th class="no-print" style="width:110px;text-align:center">Thao tác</th>
+      </tr>
+    </thead>
+   </table>
+</div><!-- /tab-b1 -->
+
+<!-- ══ THANH ĐIỀU KHIỂN CHUNG CHO B3/B4/B5 ══ -->
+<div id="report-toolbar" class="no-print" style="display:none;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:10px 14px;margin-bottom:14px">
+  <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <label class="small mb-1 d-block font-weight-bold">Đợt</label>
+      <input type="number" id="rpt-dot" class="form-control form-control-sm" value="1" min="1" max="99" style="width:70px" onchange="onRptDotChange()">
+    </div>
+    <div>
+      <label class="small mb-1 d-block font-weight-bold">Số Thông báo</label>
+      <input type="text" id="rpt-sotb" class="form-control form-control-sm" placeholder="VD: 45" style="width:110px">
+    </div>
+    <div>
+      <label class="small mb-1 d-block font-weight-bold">Ngày Thông báo</label>
+      <input type="text" id="rpt-ngaytb" class="form-control form-control-sm date-pick" placeholder="dd/mm/yyyy" style="width:130px">
+    </div>
+    <div id="b5-xa-wrap" style="display:none">
+      <label class="small mb-1 d-block font-weight-bold">Xã</label>
+      <select id="b5-xa" class="form-control form-control-sm" style="min-width:220px"><option value="">-- Chọn xã --</option></select>
+    </div>
+    <div style="padding-bottom:2px">
+      <div id="rpt-btn-b3" style="display:none">
+        <button class="btn btn-info btn-sm" onclick="loadB3()"><i class="fa fa-refresh"></i> Tải lại</button>
+        <button class="btn btn-secondary btn-sm" onclick="printB3()"><i class="fa fa-print"></i> In</button>
+        <button class="btn btn-success btn-sm" onclick="exportB3Excel()"><i class="fa fa-file-excel-o"></i> Excel</button>
+      </div>
+      <div id="rpt-btn-b4" style="display:none">
+        <button class="btn btn-info btn-sm" onclick="loadB4()"><i class="fa fa-refresh"></i> Tải lại</button>
+        <button class="btn btn-secondary btn-sm" onclick="printB4()"><i class="fa fa-print"></i> In</button>
+        <button class="btn btn-success btn-sm" onclick="exportB4Excel()"><i class="fa fa-file-excel-o"></i> Excel</button>
+      </div>
+      <div id="rpt-btn-b5" style="display:none">
+        <button class="btn btn-info btn-sm" onclick="loadB5()"><i class="fa fa-refresh"></i> Tải lại</button>
+        <button class="btn btn-secondary btn-sm" onclick="printB5()"><i class="fa fa-print"></i> In xã này</button>
+        <button class="btn btn-primary btn-sm" onclick="printAllB5()"><i class="fa fa-print"></i> In tất cả xã</button>
+        <button class="btn btn-success btn-sm" onclick="exportB5Excel()"><i class="fa fa-file-excel-o"></i> Excel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BẢNG 3 ══ -->
+<div class="mtp-pane" id="tab-b3" style="display:none">
+  <div id="b3-print-zone">
+    <div class="text-center mb-3">
+      <h5 class="font-weight-bold">THÔNG BÁO THANH TOÁN MAI TÁNG PHÍ</h5>
+      <p id="b3-print-title"></p>
+      <p id="b3-ktt" style="font-style:italic;font-size:13px"></p>
+    </div>
+    <div class="text-right mb-1" style="font-size:13px;font-style:italic">ĐVT: Đồng</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm" id="tbl-b3">
+        <thead>
+          <tr><th width="40">STT</th><th>Tên đơn vị</th><th class="text-right">Tổng tiền</th><th>Số quyết định</th><th>Số TK kho bạc</th></tr>
+        </thead>
+        <tbody id="tbody-b3"><tr><td colspan="5" class="text-center text-muted">Chọn đợt và nhấn Tải lại</tbody>
+        <tfoot id="tfoot-b3"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BẢNG 4 ══ -->
+<div class="mtp-pane" id="tab-b4" style="display:none">
+  <div id="b4-print-zone">
+    <div class="text-center mb-3">
+      <h5 class="font-weight-bold">THÔNG BÁO CHI TIẾT MAI TÁNG PHÍ</h5>
+      <p id="b4-print-title"></p>
+      <p id="b4-ktt" style="font-style:italic;font-size:13px"></p>
+    </div>
+    <div class="text-right mb-1" style="font-size:13px;font-style:italic">ĐVT: Đồng</div>
+    <div class="table-responsive" id="b4-wrap" style="overflow-x:auto">
+      <table class="table table-bordered table-sm" id="tbl-b4">
+        <thead id="b4-thead"></thead>
+        <tbody id="tbody-b4"><tr><td colspan="20" class="text-center text-muted">Chọn đợt và nhấn Tải lại</tbody>
+        <tfoot id="tfoot-b4"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BẢNG 5 ══ -->
+<div class="mtp-pane" id="tab-b5" style="display:none">
+  <div id="b5-print-zone">
+    <div class="text-left" style="font-weight:bold">SỞ NỘI VỤ</div>
+    <div class="text-center mb-1"><h5 class="font-weight-bold" id="b5-title">DANH SÁCH CHI TRẢ MAI TÁNG PHÍ NĂM 2026 ĐỢT ...</h5></div>
+    <p id="b5-kemtheo" class="text-center mb-1" style="font-style:italic;font-size:13px"></p>
+    <div class="text-right mb-1" style="font-size:13px;font-style:italic">ĐVT: Đồng</div>
+    <div class="table-responsive" style="overflow-x:auto">
+      <table class="table table-bordered table-sm" id="tbl-b5">
+        <thead id="b5-thead"></thead>
+        <tbody id="tbody-b5"><tr><td colspan="20" class="text-center text-muted">Chọn đợt và xã, nhấn Tải lại</tbody>
+        <tfoot id="tfoot-b5"></tfoot>
+      </table>
+    </div>
+    <div id="b5-words" style="margin-top:15px;font-weight:bold"></div>
+    <div style="margin-top:15px;text-align:right;font-style:italic">Sơn La, ngày <span id="b5-ngay-display"></span> tháng <span id="b5-thang-display"></span> năm <span id="b5-nam-display"></span></div>
+    <table style="width:100%;margin-top:10px;border:none;border-collapse:collapse">
+      <tr>
+        <td style="width:33%;text-align:center;border:none"><strong>Người lập</strong></td>
+        <td style="width:33%;text-align:center;border:none"><strong>Kế toán</strong></td>
+        <td style="width:33%;text-align:center;border:none"><strong>Thủ trưởng đơn vị</strong></td>
+      </tr>
+      <tr style="height:90px"><td colspan="3" style="border:none"></td></tr>
+      <tr>
+        <td style="width:33%;text-align:center;border:none"><strong><span id="b5-nguoilap-sign"></span></strong></td>
+        <td style="width:33%;text-align:center;border:none"><strong><span id="b5-ke_toan-sign"></span></strong></td>
+        <td style="width:33%;text-align:center;border:none"><strong><span id="b5-thu_truong-sign"></span></strong></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- /mtp-tab-content -->
+
+<!-- ══ MODAL CÀI ĐẶT ══ -->
+<div class="modal fade" id="modal-settings" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-secondary text-white py-2">
+        <h6 class="modal-title mb-0"><i class="fa fa-cog"></i> Cài đặt hệ thống</h6>
+        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="font-weight-bold">Người lập</label>
+          <input type="text" id="cfg-nguoilap" class="form-control form-control-sm" placeholder="Họ và tên người lập biểu">
+        </div>
+        <div class="form-group">
+          <label class="font-weight-bold">Kế toán</label>
+          <input type="text" id="cfg-ke_toan" class="form-control form-control-sm" placeholder="Họ và tên kế toán">
+        </div>
+        <div class="form-group mb-0">
+          <label class="font-weight-bold">Thủ trưởng đơn vị</label>
+          <input type="text" id="cfg-thu_truong" class="form-control form-control-sm" placeholder="Họ và tên thủ trưởng đơn vị">
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()"><i class="fa fa-save"></i> Lưu cài đặt</button>
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons@2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons-bs4@2.4.1/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons@2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons@2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+async function doLogout() {
+  await fetch('/logout', { method:'POST', credentials:'same-origin' });
+  window.location.href = '/login';
+}
+fetch('/api/me', {credentials:'same-origin'})
+  .then(r=>r.ok?r.json():null)
+  .then(u=>{ if(u) document.getElementById('fullname-display').textContent = u.fullname; });
+
+// ==================== HÀM ĐỊNH DẠNG TIỀN TỆ ĐÚNG ====================
+function formatCurrencyVND(value) {
+  if (value === undefined || value === null || isNaN(value)) value = 0;
+  return value.toLocaleString('vi-VN') + ' ₫';
+}
+
+// Hàm parse số từ chuỗi
+function parseCurrencyVND(str) {
+  if (!str) return 0;
+  let cleaned = str.replace(/[^0-9]/g, '');
+  return parseInt(cleaned, 10) || 0;
+}
+
+// ==================== HÀM XUẤT EXCEL VỚI EXCELJS CÓ STYLE ====================
+// Hàm xuất Excel với merge cells chính xác (xử lý colspan/rowspan)
+// ==================== CẬP NHẬT HÀM XUẤT EXCEL ====================
+
+// Hàm xuất Excel với border chỉ áp dụng cho bảng (không border cho tiêu đề)
+// ==================== HÀM XUẤT EXCEL VỚI FONT TIMES NEW ROMAN ====================
+// ==================== HÀM XUẤT EXCEL VỚI EXCELJS (SỬA LỖI + FONT TIMES NEW ROMAN) ====================
+// ==================== HÀM XUẤT EXCEL CHUẨN (CÓ STYLE, MERGE, FONT TIMES NEW ROMAN) ====================
+
+// Hàm xuất Excel với border chỉ áp dụng cho bảng, font Times New Roman
+// ==================== HÀM XUẤT EXCEL CHÍNH XÁC, KHÔNG LỖI ====================
+async function exportTableToExcelWithStyle(tableId, sheetName, titleLines) {
+    const table = document.getElementById(tableId);
+    if (!table) { alert('Không tìm thấy bảng!'); return; }
+
+    const workbook  = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(sheetName || 'Sheet1');
+
+    // ── Thu thập tất cả <tr> theo thứ tự thead → tbody → tfoot ──
+    const rows = [];
+    ['thead','tbody','tfoot'].forEach(sec => {
+        const el = table.querySelector(sec);
+        if (el) el.querySelectorAll('tr').forEach(tr => rows.push({ tr, sec }));
+    });
+    if (!rows.length) { alert('Bảng không có dữ liệu'); return; }
+
+    // Số cột tối đa
+    let maxCols = 0;
+    rows.forEach(({ tr }) => {
+        let c = 0;
+        tr.querySelectorAll('th,td').forEach(cell => c += parseInt(cell.getAttribute('colspan')||1));
+        if (c > maxCols) maxCols = c;
+    });
+
+    // ── Grid matrix: Symbol('EMPTY') = chưa điền, null = occupied bởi merge ──
+    const EMPTY = Symbol('EMPTY');
+    const grid  = [];       // grid[r][c] = meta | null | EMPTY
+    const mergeList = [];   // { r1,c1,r2,c2 }
+
+    function ensureRow(r) {
+        while (grid.length <= r) grid.push(new Array(maxCols).fill(EMPTY));
+    }
+
+    let rowIdx = 0;
+    for (const { tr, sec } of rows) {
+        ensureRow(rowIdx);
+        let colIdx = 0;
+        for (const cell of tr.querySelectorAll('th,td')) {
+            while (colIdx < maxCols && grid[rowIdx][colIdx] !== EMPTY) colIdx++;
+            if (colIdx >= maxCols) break;
+
+            const cs  = parseInt(cell.getAttribute('colspan')||1);
+            const rs  = parseInt(cell.getAttribute('rowspan')||1);
+            const cls = cell.className || '';
+            let text  = cell.innerText.trim();
+            if (cls.includes('soqd-wrap') || (text.includes(';') && !text.includes('/'))) {
+                text = text.split(';').map(s=>s.trim()).filter(Boolean).join(';\n');
+            }
+            // Parse số tiền
+            const numTry = parseFloat(text.replace(/\./g,'').replace(/,/g,'.'));
+            const isNum  = !isNaN(numTry) && /^[\d.,]+$/.test(text.replace(/\s/g,''));
+            const value  = isNum ? numTry : text;
+
+            const meta = {
+                value,
+                isHeader: sec === 'thead',
+                isTotal:  sec === 'tfoot' || text === 'TỔNG CỘNG',
+                isGroup:  cls.includes('th-group'),
+                isSub:    cls.includes('th-sub'),
+                isRight:  cls.includes('total-col') || cls.includes('text-right') || isNum,
+                cs, rs,
+            };
+
+            for (let dr = 0; dr < rs; dr++) {
+                ensureRow(rowIdx + dr);
+                for (let dc = 0; dc < cs; dc++) {
+                    grid[rowIdx+dr][colIdx+dc] = (dr===0 && dc===0) ? meta : null;
+                }
+            }
+            if (rs > 1 || cs > 1) mergeList.push({ r1:rowIdx, c1:colIdx, r2:rowIdx+rs-1, c2:colIdx+cs-1 });
+            colIdx += cs;
+        }
+        rowIdx++;
+    }
+
+    const tableRows = grid.length;
+
+    // ── Chèn tiêu đề ──
+    const titleArr   = titleLines.split('\n').filter(s => s.trim());
+    const titleCount = titleArr.length + (titleArr.length > 0 ? 1 : 0); // +1 dòng trống
+
+    // Shift merge xuống
+    mergeList.forEach(m => { m.r1 += titleCount; m.r2 += titleCount; });
+
+    // Prepend title rows
+    for (let i = titleArr.length - 1; i >= 0; i--) {
+        const row = new Array(maxCols).fill(EMPTY);
+        row[0] = { value: titleArr[i], isTitle: true, cs: maxCols, rs: 1 };
+        for (let c = 1; c < maxCols; c++) row[c] = null;
+        grid.unshift(row);
+        mergeList.push({ r1: i, c1: 0, r2: i, c2: maxCols-1 });
+    }
+    // Dòng trống sau tiêu đề
+    if (titleArr.length > 0) {
+        const blankRow = new Array(maxCols).fill(EMPTY);
+        grid.splice(titleArr.length, 0, blankRow);
+    }
+
+    // ── Ghi vào worksheet ──
+    const THIN   = { style:'thin' };
+    const BORDER = { top:THIN, left:THIN, bottom:THIN, right:THIN };
+    const FONT   = { name:'Times New Roman', family:2, size:11 };
+
+    grid.forEach((rowData, rIdx) => {
+        const excelRow = worksheet.addRow(rowData.map(m => (m && m !== EMPTY) ? m.value : ''));
+        excelRow.height = 18;
+        rowData.forEach((meta, cIdx) => {
+            if (!meta || meta === null || meta === EMPTY) return;
+            const cell = excelRow.getCell(cIdx + 1);
+
+            cell.font = { ...FONT, bold: meta.isTitle || meta.isHeader || meta.isTotal };
+
+            if (meta.isTitle) {
+                cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+                return; // không border cho tiêu đề
+            }
+
+            cell.border = BORDER;
+
+            if (meta.isTotal)       cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF3CD' } };
+            else if (meta.isGroup)  cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFD9E1F2' } };
+            else if (meta.isSub)    cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF2F2F2' } };
+            else if (meta.isHeader) cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFF0F0F0' } };
+
+            const forceCenter = meta.isHeader || meta.isGroup || meta.isSub;
+            cell.alignment = {
+                horizontal: forceCenter ? 'center' : meta.isRight ? 'right' : 'left',
+                vertical: 'middle',
+                wrapText: true,
+            };
+            if (typeof meta.value === 'number' && meta.value > 999) cell.numFmt = '#,##0';
+        });
+    });
+
+    // ── Merge ──
+    mergeList.forEach(({ r1,c1,r2,c2 }) => {
+        if (r1===r2 && c1===c2) return;
+        try { worksheet.mergeCells(r1+1, c1+1, r2+1, c2+1); } catch(e) {}
+    });
+
+    // ── Auto-fit cột: tính trên nội dung thực, chia cho colspan ──
+    const colWidths = new Array(maxCols).fill(6);
+    grid.forEach(rowData => {
+        rowData.forEach((meta, cIdx) => {
+            if (!meta || meta === null || meta === EMPTY) return;
+            const text   = String(meta.value || '');
+            const lines  = text.split('\n');
+            const maxLen = Math.max(...lines.map(l => l.length));
+            const perCol = Math.ceil(maxLen / (meta.cs || 1));
+            if (perCol > colWidths[cIdx]) colWidths[cIdx] = perCol;
+        });
+    });
+    worksheet.columns.forEach((col, i) => {
+        col.width = Math.min(Math.max(colWidths[i] + 2, 8), 60);
+    });
+
+    // ── Download ──
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href = url; a.download = `${sheetName}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+
+// Cập nhật các hàm export để tạo title đầy đủ
+window.exportB3Excel = function() {
+    const dot = $('#rpt-dot').val();
+    const titleMain = `THÔNG BÁO THANH TOÁN MAI TÁNG PHÍ\nĐợt ${dot} — Năm 2026`;
+    const subTitle = $('#b3-ktt').text() || '';
+    const dvt = 'ĐVT: Đồng';
+    let fullTitle = `${titleMain}\n${subTitle}\n${dvt}`;
+    fullTitle = fullTitle.split('\n').filter(line => line.trim() !== '').join('\n');
+    exportTableToExcelWithStyle('tbl-b3', 'Thong_bao_dot', fullTitle);
+};
+
+window.exportB4Excel = function() {
+    const dot = $('#rpt-dot').val();
+    const titleMain = `THÔNG BÁO CHI TIẾT MAI TÁNG PHÍ\nĐợt ${dot} — Năm 2026`;
+    const subTitle = $('#b4-ktt').text() || '';
+    const dvt = 'ĐVT: Đồng';
+    let fullTitle = `${titleMain}\n${subTitle}\n${dvt}`;
+    fullTitle = fullTitle.split('\n').filter(line => line.trim() !== '').join('\n');
+    exportTableToExcelWithStyle('tbl-b4', 'Chi_tiet_dot', fullTitle);
+};
+
+window.exportB5Excel = function() {
+    const dot = $('#rpt-dot').val();
+    const xa = $('#b5-xa option:selected').text();
+    const titleMain = `DANH SÁCH CHI TRẢ MAI TÁNG PHÍ NĂM 2026 ĐỢT ${dot}\nXã: ${xa}`;
+    const subTitle = $('#b5-kemtheo').text() || '';
+    const dvt = 'ĐVT: Đồng';
+    let fullTitle = `${titleMain}\n${subTitle}\n${dvt}`;
+    fullTitle = fullTitle.split('\n').filter(line => line.trim() !== '').join('\n');
+    exportTableToExcelWithStyle('tbl-b5', 'Chi_tiet_xa', fullTitle);
+};
+// ==================== HÀM IN GIỮ STYLE ====================
+// printWithStyle: removed
+
+// In B3
+// In B3/B4/B5/printAllB5: xử lý trong main.js
+
+// Hàm parse currency
+function parseCurrency(str) {
+  if (!str) return 0;
+  const num = parseFloat(str.replace(/[^0-9.-]/g, ''));
+  return isNaN(num) ? 0 : num;
+}
+</script>
+</body>
+</html>
