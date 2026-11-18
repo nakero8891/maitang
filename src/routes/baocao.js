@@ -69,7 +69,7 @@ router.get('/chitiet', requireLogin, async (req, res) => {
     const { where, params } = dotFilter(dot);
     try {
         const [rows] = await pool.query(
-            `SELECT h.soqd, h.loai, h.muc, d.xa, d.donvi, d.sotk
+            `SELECT h.soqd, h.loai, h.muc, d.id AS donvi_id, d.xa, d.donvi, d.sotk
              FROM ${TBL} h LEFT JOIN ${TBL_DONVI} d ON h.xa_id=d.id
              ${where} ORDER BY d.xa ASC`, params);
 
@@ -102,7 +102,7 @@ router.get('/chitietxa', requireLogin, async (req, res) => {
     if (!xa_id) return res.status(400).json({ status: 'error', msg: 'Thiếu xa_id' });
     try {
         const [rows] = await pool.query(
-            `SELECT h.soqd, h.loai, h.muc, d.xa, d.donvi, d.sotk
+            `SELECT h.soqd, h.loai, h.muc, d.id AS donvi_id, d.xa, d.donvi, d.sotk
              FROM ${TBL} h LEFT JOIN ${TBL_DONVI} d ON h.xa_id=d.id
              WHERE h.dot=? AND h.xa_id=? AND ${BASE_FILTER}
              ORDER BY h.id ASC`, [dot, xa_id]);
