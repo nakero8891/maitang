@@ -50,19 +50,24 @@ router.put('/:id', requireLogin, async (req, res) => {
 
 // DELETE /api/donvi/:id — xoá
 router.delete('/:id', requireLogin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ status: 'error', msg: 'Mã đơn vị không hợp lệ' });
+  const conn = await pool.getConnection();
   try {
-    const [[{ cnt }]] = await pool.query(
-      `SELECT COUNT(*) AS cnt FROM ${TBL_HOSO} WHERE xa_id = ?`, [id]
-    );
-    if (cnt > 0) return res.status(400).json({ status: 'error', msg: `Không thể xóa — còn ${cnt} hồ sơ liên kết` });
-    await pool.query(`DELETE FROM ${TBL} WHERE id = ?`, [id]);
+    await conn.beginTransaction();
+    const [units] = await conn.query('SELECT id FROM ' + TBL + ' WHERE id=? FOR UPDATE', [id]);
+    if (!units.length) { await conn.rollback(); return res.status(404).json({ status: 'error', msg: 'Không tìm thấy đơn vị' }); }
+    const [[{ cnt }]] = await conn.query('SELECT COUNT(*) AS cnt FROM ' + TBL_HOSO + ' WHERE xa_id=?', [id]);
+    if (cnt > 0) { await conn.rollback(); return res.status(409).json({ status: 'error', msg: 'Không thể xóa — còn ' + cnt + ' hồ sơ liên kết' }); }
+    await conn.query('DELETE FROM ' + TBL + ' WHERE id=?', [id]);
+    await conn.commit();
     res.json({ status: 'ok', msg: 'Đã xoá đơn vị' });
   } catch (err) {
+    await conn.rollback();
+    if (err.code === 'ER_ROW_IS_REFERENCED_2') return res.status(409).json({ status: 'error', msg: 'Đơn vị đang được hồ sơ sử dụng' });
     res.status(500).json({ status: 'error', msg: err.message });
-  }
+  } finally { conn.release(); }
 });
-
 // POST /api/donvi/import — nhập hàng loạt
 router.post('/import', requireLogin, async (req, res) => {
   const rows = req.body.rows || [];
