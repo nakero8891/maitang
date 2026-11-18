@@ -43,19 +43,20 @@ router.get('/thongbao', requireLogin, async (req, res) => {
     const { where, params } = dotFilter(dot);
     try {
         const [rows] = await pool.query(
-            `SELECT h.soqd, h.loai, h.muc, d.xa, d.donvi, d.sotk
+            `SELECT h.soqd, h.loai, h.muc, d.id AS donvi_id, d.xa, d.donvi, d.sotk
              FROM ${TBL} h LEFT JOIN ${TBL_DONVI} d ON h.xa_id=d.id
              ${where} ORDER BY d.xa ASC, h.id ASC`, params);
 
-        const xaMap = {};
+        const xaMap = new Map();
         for (const row of rows) {
-            const xa = row.xa;
-            if (!xaMap[xa]) xaMap[xa] = { donvi: row.donvi, sotk: row.sotk, total: 0, soqds: [] };
-            xaMap[xa].total += Number(row.muc);
-            if (row.soqd && !xaMap[xa].soqds.includes(row.soqd)) xaMap[xa].soqds.push(row.soqd);
+            const key = row.donvi_id == null ? 'unknown:' + row.xa : String(row.donvi_id);
+            if (!xaMap.has(key)) xaMap.set(key, { xa: row.xa, donvi: row.donvi, sotk: row.sotk, total: 0, soqds: [] });
+            const item = xaMap.get(key);
+            item.total += Number(row.muc);
+            if (row.soqd && !item.soqds.includes(row.soqd)) item.soqds.push(row.soqd);
         }
-        const data  = Object.entries(xaMap).map(([xa, v]) => ({
-            xa, donvi: v.donvi, sotk: v.sotk, total: v.total, soqds: v.soqds.join('; '),
+        const data  = Array.from(xaMap.values()).map((v) => ({
+            xa: v.xa, donvi: v.donvi, sotk: v.sotk, total: v.total, soqds: v.soqds.join('; '),
         }));
         const total = data.reduce((s, r) => s + r.total, 0);
         res.json({ dot, data, total });
@@ -73,26 +74,22 @@ router.get('/chitiet', requireLogin, async (req, res) => {
              ${where} ORDER BY d.xa ASC`, params);
 
         const loais = fullLoais();
-        const xaMap = {};
+        const xaMap = new Map();
         for (const row of rows) {
-            const xa = row.xa;
-            if (!xaMap[xa]) {
-                xaMap[xa] = { donvi: row.donvi, sotk: row.sotk, soqds: [], cells: {} };
-                for (const l of loais) {
-                    xaMap[xa].cells[l] = {};
-                    for (const m of MUC_LIST) xaMap[xa].cells[l][m] = 0;
-                }
+            const key = row.donvi_id == null ? 'unknown:' + row.xa : String(row.donvi_id);
+            if (!xaMap.has(key)) {
+                const cells = {};
+                for (const l of loais) { cells[l] = {}; for (const m of MUC_LIST) cells[l][m] = 0; }
+                xaMap.set(key, { xa: row.xa, donvi: row.donvi, sotk: row.sotk, soqds: [], cells });
             }
+            const item = xaMap.get(key);
             const full = toFull(row.loai);
-            if (!xaMap[xa].cells[full]) {
-                xaMap[xa].cells[full] = {};
-                for (const m of MUC_LIST) xaMap[xa].cells[full][m] = 0;
-            }
-            xaMap[xa].cells[full][Number(row.muc)] = (xaMap[xa].cells[full][Number(row.muc)] || 0) + 1;
-            if (row.soqd && !xaMap[xa].soqds.includes(row.soqd)) xaMap[xa].soqds.push(row.soqd);
+            if (!item.cells[full]) item.cells[full] = {};
+            item.cells[full][Number(row.muc)] = (item.cells[full][Number(row.muc)] || 0) + 1;
+            if (row.soqd && !item.soqds.includes(row.soqd)) item.soqds.push(row.soqd);
         }
-        const data = Object.entries(xaMap).map(([xa, v]) => ({
-            xa, donvi: v.donvi, sotk: v.sotk, soqds: v.soqds.join('; '), cells: v.cells,
+        const data = Array.from(xaMap.values()).map((v) => ({
+            xa: v.xa, donvi: v.donvi, sotk: v.sotk, soqds: v.soqds.join('; '), cells: v.cells,
         }));
         res.json({ dot, loais, mucs: MUC_LIST, data });
     } catch (err) { res.status(500).json({ status: 'error', msg: err.message }); }
