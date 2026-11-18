@@ -11,9 +11,12 @@ const hosoRouter     = require('./routes/hoso');
 const baocaoRouter   = require('./routes/baocao');
 const draftRouter    = require('./routes/draft');
 const settingsRouter = require('./routes/settings');
+const { requireLoginPage } = require('./middleware/auth');
 
 const app    = express();
 const PUBLIC = path.join(__dirname, '..', 'public');
+
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -63,7 +66,7 @@ class MysqlSessionStore extends session.Store {
                 [sid, Math.floor(Date.now() / 1000)]
             );
             cb(null, row ? JSON.parse(row.data) : null);
-        } catch(e) { cb(null, null); }   // lỗi DB → coi như không có session, không crash
+        } catch(e) { cb(e); }
     }
 
     async set(sid, sess, cb) {
@@ -76,7 +79,7 @@ class MysqlSessionStore extends session.Store {
                 [sid, expires, JSON.stringify(sess), expires, JSON.stringify(sess)]
             );
             cb(null);
-        } catch(e) { cb(null); }   // lỗi DB → không crash
+        } catch(e) { cb(e); }
     }
 
     async destroy(sid, cb) {
@@ -99,11 +102,11 @@ setInterval(async () => {
 
 app.use(session({
     key:               'mtp_session',
-    secret:            process.env.SESSION_SECRET || 'change_me_please',
+    secret:            (() => { const secret = process.env.SESSION_SECRET; if (!secret || secret.length < 32) throw new Error('SESSION_SECRET phải được cấu hình và có ít nhất 32 ký tự'); return secret; })(),
     store:             new MysqlSessionStore(),
     resave:            false,
     saveUninitialized: false,
-    cookie: { secure: false, httpOnly: true, maxAge: 8 * 3600 * 1000 },
+    cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, sameSite: 'lax', maxAge: 8 * 3600 * 1000 },
 }));
 
 // Page routes
@@ -111,13 +114,14 @@ app.get('/login', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.sendFile(path.join(PUBLIC, 'login.html'));
 });
+app.get('/index.html', requireLoginPage, (req, res) => res.sendFile(path.join(PUBLIC, 'index.html')));
 app.get('/', (req, res) => {
     if (!req.session?.user) return res.redirect('/login');
     res.setHeader('Content-Type', 'text/html');
     res.sendFile(path.join(PUBLIC, 'index.html'));
 });
 
-app.use(express.static(PUBLIC));
+app.use(express.static(PUBLIC, { index: false }));
 
 app.use('/',             authRouter);
 app.use('/api/donvi',    donviRouter);
