@@ -129,6 +129,8 @@ router.post('/', requireLogin, async (req, res) => {
     return res.status(400).json({ status:'error', msg:'Thiếu thông tin bắt buộc (loại, mức, xã)' });
   if (!LOAI_MAP[loai])
     return res.status(400).json({ status:'error', msg:'Loại đối tượng không hợp lệ' });
+  if (!Number.isSafeInteger(dot) || dot < 1)
+    return res.status(400).json({ status:'error', msg:'Đợt chi trả không hợp lệ' });
   if (!MUC_VALID.includes(muc))
     return res.status(400).json({ status:'error', msg:'Mức hỗ trợ không hợp lệ' });
 
@@ -155,45 +157,33 @@ router.post('/', requireLogin, async (req, res) => {
 
 // ── PUT /api/hoso/:id — sửa ─────────────────────────────
 router.put('/:id', requireLogin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ status:'error', msg:'Mã hồ sơ không hợp lệ' });
   let { soqd, loai, muc, xa_id, dot, ghichu } = req.body;
-  soqd  = (soqd||'').trim() || null;
-  loai  = toShort(loai||'');
-  muc   = parseInt(muc);
-  xa_id = parseInt(xa_id);
-  dot   = parseInt(dot);
-  const ncc = extractNccFields(req.body);
-
+  soqd = (soqd || '').trim() || null; loai = toShort(loai || '');
+  muc = Number(muc); xa_id = Number(xa_id); dot = Number(dot);
+  if (!LOAI_MAP[loai] || !MUC_VALID.includes(muc) || !Number.isSafeInteger(xa_id) || xa_id <= 0 || !Number.isSafeInteger(dot) || dot < 1)
+    return res.status(400).json({ status:'error', msg:'Thông tin loại, mức hỗ trợ, xã hoặc đợt không hợp lệ' });
   try {
-    await pool.query(`
-      UPDATE ${TBL} SET
-        soqd=?, loai=?, muc=?, xa_id=?, dot=?, ghichu=?,
-        doituong=?, namsinh=?, ngaytutran=?, chitietloai=?, ban_doituong=?,
-        nguoinhan=?, quanhe=?, ngaysinh_nhan=?, gioitinh=?,
-        quequan_nhan=?, thuongtru_nhan=?, so_ngay_trinh=?
-      WHERE id=?`,
-      [soqd, loai, muc, xa_id, dot, ghichu||null,
-       ncc.doituong, ncc.namsinh, ncc.ngaytutran, ncc.chitietloai, ncc.ban_doituong,
-       ncc.nguoinhan, ncc.quanhe, ncc.ngaysinh_nhan, ncc.gioitinh,
-       ncc.quequan_nhan, ncc.thuongtru_nhan, ncc.so_ngay_trinh, id]);
-
+    const [result] = await pool.query('UPDATE ' + TBL + ' SET soqd=?, loai=?, muc=?, xa_id=?, dot=?, ghichu=? WHERE id=?', [soqd, loai, muc, xa_id, dot, ghichu || null, id]);
+    if (!result.affectedRows) return res.status(404).json({ status:'error', msg:'Không tìm thấy hồ sơ' });
+    // Chỉ cập nhật trường NCC được gửi lên, tránh xoá dữ liệu khi form rút gọn.
+    const ncc = extractNccFields(req.body);
+    const fields = NCC_FIELDS.filter((field) => Object.prototype.hasOwnProperty.call(req.body, field));
+    if (fields.length) await pool.query('UPDATE ' + TBL + ' SET ' + fields.map((field) => field + '=?').join(', ') + ' WHERE id=?', [...fields.map((field) => ncc[field]), id]);
     res.json({ status:'ok', msg:'Cập nhật thành công' });
-  } catch (err) {
-    res.status(500).json({ status:'error', msg: err.message });
-  }
+  } catch (err) { res.status(500).json({ status:'error', msg: err.message }); }
 });
-
 // ── DELETE /api/hoso/:id ─────────────────────────────────
 router.delete('/:id', requireLogin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ status:'error', msg:'Mã hồ sơ không hợp lệ' });
   try {
-    await pool.query(`DELETE FROM ${TBL} WHERE id=?`, [id]);
+    const [result] = await pool.query('DELETE FROM ' + TBL + ' WHERE id=?', [id]);
+    if (!result.affectedRows) return res.status(404).json({ status:'error', msg:'Không tìm thấy hồ sơ' });
     res.json({ status:'ok', msg:'Đã xoá hồ sơ' });
-  } catch (err) {
-    res.status(500).json({ status:'error', msg: err.message });
-  }
+  } catch (err) { res.status(500).json({ status:'error', msg: err.message }); }
 });
-
 // ── POST /api/hoso/import — nhập hàng loạt (hỗ trợ NCC) ─
 router.post('/import', requireLogin, async (req, res) => {
   const rows = req.body.rows || [];
@@ -211,6 +201,8 @@ router.post('/import', requireLogin, async (req, res) => {
 
     if (!loai || !muc || !xa) { errors.push(`Dòng ${i+1}: thiếu dữ liệu`); continue; }
     if (!LOAI_MAP[loai]) { errors.push(`Dòng ${i+1}: loại "${loai}" không hợp lệ`); continue; }
+    if (!MUC_VALID.includes(muc)) { errors.push(`Dòng ${i+1}: mức hỗ trợ không hợp lệ`); continue; }
+    if (!Number.isSafeInteger(dot) || dot < 1) { errors.push(`Dòng ${i+1}: đợt chi trả không hợp lệ`); continue; }
 
     try {
       const [[xaRow]] = await pool.query(
