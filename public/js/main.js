@@ -757,17 +757,20 @@ function openPrint(html, landscape) {
         : '@media print{@page{size:A4;margin:10mm}}';
     const full = '<!DOCTYPE html><html><head><meta charset="utf-8">'
         + '<style>' + PRINT_CSS + page + '.table-responsive{overflow:visible!important}</style>'
-        + '</head><body>' + html
-        + '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'
-        + '</body></html>';
+        + '</head><body>' + html + '</body></html>';
     const iframe = getPrintIframe();
-    iframe.onload = null;
-    iframe.srcdoc = full;
+    // Chỉ gọi print tại một nơi duy nhất để tránh mở hai hộp thoại.
     iframe.onload = function() {
         setTimeout(function() {
-            try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(e) {}
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } catch(e) {
+                console.error('Không thể mở hộp thoại in:', e);
+            }
         }, 500);
     };
+    iframe.srcdoc = full;
 }
 
 function printB3() { openPrint(document.getElementById('b3-print-zone').innerHTML, false); }
@@ -776,22 +779,34 @@ function printB4() {
     const page = '@media print{@page{size:A4 landscape;margin:20mm}}';
     const full = '<!DOCTYPE html><html><head><meta charset="utf-8">'
         + '<style>' + PRINT_CSS + page + '.table-responsive{overflow:visible!important}</style>'
-        + '</head><body><div id="bz">' + zone.innerHTML + '</div>'
-        + '<script>window.onload=function(){'
-        + '  var pw=1100,tbl=document.querySelector("#bz table");'
-        + '  if(tbl&&tbl.offsetWidth>pw){var s=pw/tbl.offsetWidth;'
-        + '  document.getElementById("bz").style.cssText="transform:scale("+s+");transform-origin:top left;width:"+(100/s)+"%";}'
-        + '  setTimeout(function(){window.print();},500);'
-        + '}<\/script></body></html>';
+        + '</head><body><div id="bz">' + zone.innerHTML + '</div></body></html>';
     const iframe = getPrintIframe();
-    iframe.onload = null;
-    iframe.srcdoc = full;
+    // Co bảng trước khi in, sau đó chỉ gọi print một lần.
     iframe.onload = function() {
+        try {
+            const doc = iframe.contentDocument;
+            const pw = 1100;
+            const tbl = doc && doc.querySelector('#bz table');
+            if (tbl && tbl.offsetWidth > pw) {
+                const s = pw / tbl.offsetWidth;
+                doc.getElementById('bz').style.cssText =
+                    'transform:scale(' + s + ');transform-origin:top left;width:' + (100 / s) + '%;';
+            }
+        } catch(e) {
+            console.error('Không thể căn chỉnh bảng trước khi in:', e);
+        }
         setTimeout(function() {
-            try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(e) {}
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } catch(e) {
+                console.error('Không thể mở hộp thoại in:', e);
+            }
         }, 500);
     };
+    iframe.srcdoc = full;
 }
+
 function printB5() { openPrint(document.getElementById('b5-print-zone').innerHTML, true); }
 
 // Danh sách phường (không có tiền tố "phường" trong tên)
